@@ -1,0 +1,28 @@
+{
+  "settings": {
+    "title": "Вечер с друзьями",
+    "city": "Казань",
+    "startsAt": "2026-09-26T19:00:00+03:00",
+    "durationMinutes": 240,
+    "budget": 1500,
+    "radiusKm": 3,
+    "origin": {
+      "lat": 55.7879,
+      "lon": 49.1233
+    },
+    "expectedParticipants": 5
+  },
+  "preference": {
+    "vibes": [
+      "active",
+      "food",
+      "outdoor"
+    ],
+    "budget": 1500,
+    "radiusKm": 3,
+    "availableFrom": "2026-09-26T19:00:00+03:00",
+    "availableUntil": "2026-09-26T23:00:00+03:00",
+    "veto": "cinema",
+    "age": 25
+  }
+}

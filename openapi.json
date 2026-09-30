@@ -1,0 +1,1584 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Соберёмся API",
+    "version": "0.4.0",
+    "description": "Бот и mini app используют общие встречи. Геопозиция и поиск поддерживают города России, реальные места рядом загружаются из OpenStreetMap."
+  },
+  "servers": [
+    {
+      "url": "https://soberemsya.139.100.225.250.sslip.io",
+      "description": "Public hackathon MVP"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local demo"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "get__api_health",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "service",
+                    "version"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config": {
+      "get": {
+        "summary": "Public configuration",
+        "operationId": "get__api_config",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "allowDemo",
+                    "botUsername",
+                    "appUrl",
+                    "cities"
+                  ],
+                  "properties": {
+                    "allowDemo": {
+                      "type": "boolean"
+                    },
+                    "botUsername": {
+                      "type": "string"
+                    },
+                    "appUrl": {
+                      "type": "string"
+                    },
+                    "cities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/City"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog": {
+      "get": {
+        "summary": "Prepared catalogue",
+        "operationId": "get__api_catalog",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "activities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Activity"
+                      }
+                    }
+                  },
+                  "required": [
+                    "activities"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/demo": {
+      "post": {
+        "summary": "Create isolated demo identity",
+        "operationId": "post__api_auth_demo",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/Identity"
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "user"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  }
+                },
+                "required": [
+                  "displayName"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions": {
+      "get": {
+        "summary": "List joined sessions",
+        "operationId": "get__api_sessions",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sessions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SessionView"
+                      }
+                    }
+                  },
+                  "required": [
+                    "sessions"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create session",
+        "operationId": "post__api_sessions",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Idempotent replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "$ref": "#/components/schemas/SessionSettings"
+                  },
+                  "preference": {
+                    "$ref": "#/components/schemas/Preference"
+                  }
+                },
+                "required": [
+                  "settings",
+                  "preference"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 80
+            }
+          }
+        ]
+      }
+    },
+    "/api/sessions/{id}": {
+      "get": {
+        "summary": "Room and own preference only",
+        "operationId": "get__api_sessions_id",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{20,40}$"
+            }
+          }
+        ]
+      }
+    },
+    "/api/sessions/{id}/join": {
+      "post": {
+        "summary": "Join using invitation identifier",
+        "operationId": "post__api_sessions_id_join",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{20,40}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preference": {
+                    "$ref": "#/components/schemas/Preference"
+                  }
+                },
+                "required": [
+                  "preference"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{id}/preferences": {
+      "put": {
+        "summary": "Replace own preference; invalidate previous plan",
+        "operationId": "put__api_sessions_id_preferences",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{20,40}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preference": {
+                    "$ref": "#/components/schemas/Preference"
+                  }
+                },
+                "required": [
+                  "preference"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{id}/demo-fill": {
+      "post": {
+        "summary": "Owner of demo room adds four marked demo members",
+        "operationId": "post__api_sessions_id_demo-fill",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{20,40}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{id}/plan": {
+      "post": {
+        "summary": "Calculate group plan; requires two answers",
+        "operationId": "post__api_sessions_id_plan",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{20,40}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{id}/share": {
+      "post": {
+        "summary": "Prepare sharing text and URL; sends no message",
+        "operationId": "post__api_sessions_id_share",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "link": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "link"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "400 invalid parameters; 401 invalid auth; 403 forbidden; 404 unknown room; 409 conflict; 410 expired; 422 no match; 429 rate limit; 500 retryable server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{20,40}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/link": {
+      "post": {
+        "summary": "Exchange private one-use bot login ticket",
+        "operationId": "exchangeBotWebTicket",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ticket"
+                ],
+                "properties": {
+                  "ticket": {
+                    "type": "string",
+                    "minLength": 43,
+                    "maxLength": 43
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/Identity"
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "user"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ticket expired or already consumed"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Current validated identity",
+        "operationId": "currentIdentity",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "user"
+                  ],
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/Identity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session invalid or expired"
+          }
+        }
+      }
+    },
+    "/api/location/resolve": {
+      "post": {
+        "summary": "Определить город России и точки встречи по геопозиции",
+        "operationId": "resolveLocation",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Coordinates"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Город и точки встречи",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/City"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректные координаты"
+          },
+          "503": {
+            "description": "Сервис геоданных временно недоступен"
+          }
+        }
+      }
+    },
+    "/api/location/search": {
+      "get": {
+        "summary": "Найти город России по названию",
+        "operationId": "searchRussianCities",
+        "security": [],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 80
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Найденные города",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "cities"
+                  ],
+                  "properties": {
+                    "cities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/City"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис геоданных временно недоступен"
+          }
+        }
+      }
+    },
+    "/api/profile": {
+      "get": {
+        "summary": "Сохранённый город пользователя",
+        "operationId": "getProfile",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Профиль",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "city"
+                  ],
+                  "properties": {
+                    "city": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/City"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Сессия недействительна"
+          }
+        }
+      },
+      "put": {
+        "summary": "Сохранить город пользователя",
+        "operationId": "updateProfile",
+        "security": [
+          {
+            "MaxInitData": []
+          },
+          {
+            "DemoBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "city"
+                ],
+                "properties": {
+                  "city": {
+                    "$ref": "#/components/schemas/City"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Профиль обновлён"
+          },
+          "400": {
+            "description": "Некорректный город"
+          },
+          "401": {
+            "description": "Сессия недействительна"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "Coordinates": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "additionalProperties": false
+      },
+      "Preference": {
+        "type": "object",
+        "properties": {
+          "vibes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 7,
+            "items": {
+              "type": "string",
+              "enum": [
+                "active",
+                "calm",
+                "games",
+                "culture",
+                "outdoor",
+                "food",
+                "unusual"
+              ]
+            }
+          },
+          "budget": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "radiusKm": {
+            "type": "number",
+            "minimum": 0.2,
+            "maximum": 50
+          },
+          "availableFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availableUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "veto": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "outdoor",
+              "food",
+              "games",
+              "culture",
+              "active",
+              "cinema",
+              "unusual",
+              "volunteer",
+              null
+            ]
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 18,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "vibes",
+          "budget",
+          "radiusKm",
+          "availableFrom",
+          "availableUntil",
+          "veto",
+          "age"
+        ],
+        "additionalProperties": false
+      },
+      "SessionSettings": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 70
+          },
+          "city": {
+            "type": "string",
+            "enum": [
+              "Казань"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 480
+          },
+          "budget": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "radiusKm": {
+            "type": "number",
+            "minimum": 0.2,
+            "maximum": 50
+          },
+          "origin": {
+            "$ref": "#/components/schemas/Coordinates"
+          },
+          "expectedParticipants": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 8
+          }
+        },
+        "required": [
+          "title",
+          "city",
+          "startsAt",
+          "durationMinutes",
+          "budget",
+          "radiusKm",
+          "origin",
+          "expectedParticipants"
+        ],
+        "additionalProperties": false
+      },
+      "Activity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "opens_at": {
+            "type": "string"
+          },
+          "closes_at": {
+            "type": "string"
+          },
+          "source_name": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "source_updated_at": {
+            "type": "string"
+          },
+          "availability_status": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "price_from": {
+            "type": "number"
+          },
+          "price_to": {
+            "type": "number"
+          },
+          "duration_minutes": {
+            "type": "number"
+          },
+          "age_constraints": {
+            "type": "number"
+          },
+          "start_time": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "end_time": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "is_demo_data": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "type",
+          "category",
+          "city",
+          "district",
+          "address",
+          "opens_at",
+          "closes_at",
+          "source_name",
+          "source_url",
+          "source_updated_at",
+          "availability_status",
+          "latitude",
+          "longitude",
+          "price_from",
+          "price_to",
+          "duration_minutes",
+          "age_constraints",
+          "start_time",
+          "end_time",
+          "tags",
+          "is_demo_data"
+        ],
+        "additionalProperties": false
+      },
+      "RankedRecommendation": {
+        "type": "object",
+        "properties": {
+          "activity": {
+            "$ref": "#/components/schemas/Activity"
+          },
+          "score": {
+            "type": "number"
+          },
+          "consensusCount": {
+            "type": "integer"
+          },
+          "totalParticipants": {
+            "type": "integer"
+          },
+          "factors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "activity",
+          "score",
+          "consensusCount",
+          "totalParticipants",
+          "factors",
+          "reasons"
+        ],
+        "additionalProperties": false
+      },
+      "Plan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "activity": {
+                  "$ref": "#/components/schemas/Activity"
+                },
+                "startTime": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endTime": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "travelMinutes": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "activity",
+                "startTime",
+                "endTime",
+                "travelMinutes"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "priceTotal": {
+            "type": "number"
+          },
+          "durationMinutes": {
+            "type": "integer"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "consensusCount": {
+            "type": "integer"
+          },
+          "totalParticipants": {
+            "type": "integer"
+          },
+          "explanation": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "rules"
+                ]
+              }
+            },
+            "required": [
+              "text",
+              "mode"
+            ],
+            "additionalProperties": false
+          },
+          "mapUrl": {
+            "type": "string"
+          },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RankedRecommendation"
+            }
+          },
+          "vetoes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "revision": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "items",
+          "priceTotal",
+          "durationMinutes",
+          "distanceKm",
+          "consensusCount",
+          "totalParticipants",
+          "explanation",
+          "mapUrl",
+          "alternatives",
+          "vetoes",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "SessionView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/SessionSettings"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "displayName": {
+                  "type": "string"
+                },
+                "answered": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "displayName",
+                "answered"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "myPreference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Preference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "me": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Plan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isDemo": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "inviteUrl": {
+            "type": "string"
+          },
+          "canGenerate": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "settings",
+          "participants",
+          "myPreference",
+          "me",
+          "revision",
+          "plan",
+          "isDemo",
+          "expiresAt",
+          "inviteUrl",
+          "canGenerate"
+        ],
+        "additionalProperties": false
+      },
+      "Identity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "max"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "MeetingPoint": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Coordinates"
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "City": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "center",
+          "coverageKm",
+          "points"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "center": {
+            "$ref": "#/components/schemas/Coordinates"
+          },
+          "coverageKm": {
+            "type": "number"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeetingPoint"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "MaxInitData": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Max-Init-Data",
+        "description": "Signed original WebApp.initData; 1h max age"
+      },
+      "DemoBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Opaque session from POST /api/auth/demo (demo only) or POST /api/auth/link (verified MAX account); never a bot token."
+      }
+    }
+  }
+}

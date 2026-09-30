@@ -1,0 +1,39 @@
+{
+  "name": "soberemsya-max",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "tsx watch apps/server/src/index.ts",
+    "dev:web": "vite --config apps/webapp/vite.config.ts",
+    "build": "tsc --noEmit && vite build --config apps/webapp/vite.config.ts",
+    "start": "tsx apps/server/src/index.ts",
+    "bot": "tsx apps/bot/src/index.ts",
+    "test": "tsx --test packages/**/*.test.ts apps/server/**/*.test.ts apps/bot/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/rate-limit": "10.3.0",
+    "@fastify/static": "10.1.4",
+    "@maxhub/max-bot-api": "0.3.1",
+    "@maxhub/max-ui": "0.5.0",
+    "fastify": "5.12.5",
+    "leaflet": "1.9.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "tsx": "4.20.6",
+    "zod": "4.1.11"
+  },
+  "devDependencies": {
+    "@types/leaflet": "1.9.21",
+    "@types/node": "24.5.2",
+    "@types/react": "19.1.15",
+    "@types/react-dom": "19.1.9",
+    "@vitejs/plugin-react": "5.0.4",
+    "typescript": "5.9.2",
+    "vite": "7.3.6"
+  }
+}

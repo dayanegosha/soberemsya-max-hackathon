@@ -1,0 +1,53 @@
+name: soberemsya-max-243
+services:
+  app:
+    build: .
+    image: soberemsya-max-243:0.4.0
+    init: true
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      DB_PATH: /app/var/soberemsya.sqlite
+    volumes:
+      - ./runtime/data:/app/var
+    mem_limit: 384m
+    cpus: 1.0
+    restart: unless-stopped
+  bot:
+    image: soberemsya-max-243:0.4.0
+    pull_policy: never
+    init: true
+    env_file: .env
+    environment:
+      NODE_EXTRA_CA_CERTS: /app/certs/russian-trusted-root-ca.pem
+      DB_PATH: /app/var/soberemsya.sqlite
+    volumes:
+      - ./runtime/data:/app/var
+    command: ["node", "--import", "tsx", "apps/bot/src/index.ts"]
+    mem_limit: 192m
+    cpus: 0.5
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    depends_on:
+      app:
+        condition: service_healthy
+  https:
+    image: caddy:2.11.4-alpine
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/caddy:/etc/caddy:ro
+      - ./runtime/caddy-data:/data
+      - ./runtime/caddy-config:/config
+    mem_limit: 128m
+    cpus: 0.5
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy

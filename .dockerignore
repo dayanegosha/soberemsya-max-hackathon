@@ -1,0 +1,15 @@
+node_modules
+.git
+.env
+.env.*
+!.env.example
+var
+coverage
+*.log
+dist
+README.md
+docs
+runtime
+
+backups
+deploy.tgz

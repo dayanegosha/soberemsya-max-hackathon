@@ -1,0 +1,77 @@
+schema_version: '1.0'
+solution: Соберёмся
+team: МАХимы
+base_url: 'https://soberemsya.139.100.225.250.sslip.io'
+status: 'Public HTTPS verified; registration submitted; MAX client acceptance pending'
+notes:
+  - 'This file uses a project-defined schema: the hackathon PDF does not supply a machine schema. Confirm with organizers.'
+  - 'APP_URL must be a public HTTPS origin for submission, not localhost.'
+  - 'Demo users are created during verification; no fixed account password is needed.'
+  - 'The bot token is never an API bearer credential.'
+checks:
+  - id: health
+    role: public
+    method: GET
+    path: /api/health
+    expected_status: [200]
+    content_type: application/json
+    required_fields: [status, service, version]
+  - id: demo_identity
+    role: public
+    method: POST
+    path: /api/auth/demo
+    headers: {Content-Type: application/json}
+    body: {displayName: 'Жюри · демо'}
+    expected_status: [200]
+    content_type: application/json
+    required_fields: [token, user]
+    save: {token: '$.token'}
+  - id: create_session
+    role: demo_owner
+    method: POST
+    path: /api/sessions
+    headers: {Authorization: 'Bearer ${token}', Content-Type: application/json, Idempotency-Key: '${random_id}'}
+    body_fixture: data/verification-fixture.json
+    dynamic_fields: 'Set startsAt/availableFrom to next day 19:00+03:00; availableUntil 23:00+03:00.'
+    expected_status: [201, 200]
+    content_type: application/json
+    required_fields: [id, settings, participants, myPreference, revision, plan, inviteUrl]
+    save: {session_id: '$.id'}
+  - id: fill_demo
+    role: demo_owner
+    method: POST
+    path: '/api/sessions/${session_id}/demo-fill'
+    headers: {Authorization: 'Bearer ${token}', Content-Type: application/json}
+    body: {}
+    expected_status: [200]
+    content_type: application/json
+    required_fields: [participants, canGenerate]
+  - id: plan
+    role: participant
+    method: POST
+    path: '/api/sessions/${session_id}/plan'
+    headers: {Authorization: 'Bearer ${token}', Content-Type: application/json}
+    body: {}
+    expected_status: [200]
+    content_type: application/json
+    required_fields: [plan]
+    assertions:
+      - plan.items excludes vetoed categories
+      - plan.priceTotal is at most 1500
+      - plan.durationMinutes is at most 240
+  - id: share
+    role: participant
+    method: POST
+    path: '/api/sessions/${session_id}/share'
+    headers: {Authorization: 'Bearer ${token}', Content-Type: application/json}
+    body: {}
+    expected_status: [200]
+    content_type: application/json
+    required_fields: [text, link]
+  - id: no_auth
+    role: anonymous
+    method: GET
+    path: '/api/sessions/${session_id}'
+    expected_status: [401]
+    content_type: application/json
+    required_fields: [error]

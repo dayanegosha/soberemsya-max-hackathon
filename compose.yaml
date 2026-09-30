@@ -1,0 +1,39 @@
+name: soberemsya
+services:
+  app:
+    build: .
+    image: soberemsya:local
+    init: true
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      API_URL: ${API_URL:-http://localhost:3000/api}
+      BOT_TOKEN: ${BOT_TOKEN:-}
+      MAX_BOT_USERNAME: ${MAX_BOT_USERNAME:-}
+      ALLOW_DEMO: ${ALLOW_DEMO:-true}
+      DB_PATH: /app/var/soberemsya.sqlite
+    volumes:
+      - data:/app/var
+    restart: unless-stopped
+  bot:
+    image: soberemsya:local
+    pull_policy: never
+    init: true
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      NODE_EXTRA_CA_CERTS: /app/certs/russian-trusted-root-ca.pem
+      DB_PATH: /app/var/soberemsya.sqlite
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      BOT_TOKEN: ${BOT_TOKEN:-}
+      MAX_BOT_USERNAME: ${MAX_BOT_USERNAME:-}
+      MAX_ALLOW_WEBHOOK_REPLACE: ${MAX_ALLOW_WEBHOOK_REPLACE:-false}
+    volumes:
+      - data:/app/var
+    command: ["sh", "-c", "if [ -n \"$$BOT_TOKEN\" ]; then exec node --import tsx apps/bot/src/index.ts; else echo 'BOT_TOKEN not configured; demo app is ready'; fi"]
+    healthcheck:
+      disable: true
+volumes:
+  data:
