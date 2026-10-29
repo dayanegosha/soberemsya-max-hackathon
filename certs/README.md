@@ -1,8 +1,8 @@
-# CA for MAX Bot API only
+# .soberemsya max / сертификат MAX Bot API
 
-Public root certificate downloaded over verified HTTPS on 2026-09-25 from https://gu-st.ru/content/Other/doc/russian_trusted_root_ca.cer (Gosuslugi distribution). MAX's current API documentation explicitly requires the Ministry certificate for platform-api2.max.ru: https://dev.max.ru/docs-api.
+Публичный корневой сертификат получен по HTTPS 25 сентября 2026 года из [дистрибутива Госуслуг](https://gu-st.ru/content/Other/doc/russian_trusted_root_ca.cer). [Документация MAX](https://dev.max.ru/docs-api) требует цепочку сертификатов Минцифры для `platform-api2.max.ru`.
 
-SHA-256 fingerprint: D2:6D:2D:02:31:B7:C3:9F:92:CC:73:85:12:BA:54:10:35:19:E4:40:5D:68:B5:BD:70:3E:97:88:CA:8E:CF:31.
-Valid 2022-03-01 to 2032-02-27. This is a public trust anchor, not a secret or private key.
+Отпечаток SHA-256: D2:6D:2D:02:31:B7:C3:9F:92:CC:73:85:12:BA:54:10:35:19:E4:40:5D:68:B5:BD:70:3E:97:88:CA:8E:CF:31.
+Срок действия: с 2022-03-01 по 2032-02-27. Это публичный корневой сертификат; закрытого ключа здесь нет.
 
-Only the bot process receives NODE_EXTRA_CA_CERTS. TLS hostname and certificate verification stay enabled. No host OS certificate store is modified. For local Linux bot start, set NODE_EXTRA_CA_CERTS=certs/russian-trusted-root-ca.pem before starting Node. Review the official source if certificate rotation occurs; never disable TLS verification.
+`NODE_EXTRA_CA_CERTS` передаётся только процессу бота. Проверки имени хоста и сертификата TLS остаются включёнными, системное хранилище сертификатов не меняется. Для локального запуска бота на Linux задайте `NODE_EXTRA_CA_CERTS=certs/russian-trusted-root-ca.pem` перед запуском Node. При смене сертификата сверяйтесь с официальным источником; проверку TLS отключать нельзя.
